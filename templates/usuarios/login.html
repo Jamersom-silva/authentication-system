@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login</title>
-</head>
-<body>
-    <h1>Entrar</h1>
+<h1>Login</h1>
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Entrar</button>
+</form>
 
-        <button type="submit">Entrar</button>
-    </form>
+<h2>Ou entre usando:</h2>
+
+<a href="{% url 'social:begin' 'google-oauth2' %}" class="social-btn google">
+    Login com Google
+</a>
+
+<a href="{% url 'social:begin' 'github' %}" class="social-btn github">
+    Login com GitHub
+</a>
+
 
     <p>Não tem conta? <a href="{% url 'registro' %}">Registrar</a></p>
 </body>

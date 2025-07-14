@@ -1,25 +1,62 @@
+{% load widget_tweaks %}
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-<h1>Login</h1>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Entrar</button>
-</form>
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
+        <h2 class="text-2xl font-bold mb-6 text-center">Entrar na sua conta</h2>
 
-<h2>Ou entre usando:</h2>
+        <form method="post">
+            {% csrf_token %}
 
-<a href="{% url 'social:begin' 'google-oauth2' %}" class="social-btn google">
-    Login com Google
-</a>
+            <div class="mb-4">
+                {{ form.username.label_tag }}
+                {{ form.username|add_class:"w-full p-2 border border-gray-300 rounded mt-1" }}
+                {% if form.username.errors %}
+                    <p class="text-red-500 text-sm">{{ form.username.errors }}</p>
+                {% endif %}
+            </div>
 
-<a href="{% url 'social:begin' 'github' %}" class="social-btn github">
-    Login com GitHub
-</a>
+            <div class="mb-4">
+                {{ form.password.label_tag }}
+                {{ form.password|add_class:"w-full p-2 border border-gray-300 rounded mt-1" }}
+                {% if form.password.errors %}
+                    <p class="text-red-500 text-sm">{{ form.password.errors }}</p>
+                {% endif %}
+            </div>
 
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Entrar</button>
+        </form>
 
-    <p>Não tem conta? <a href="{% url 'registro' %}">Registrar</a></p>
+        <p class="text-center text-sm text-gray-600 mt-4">
+            Não tem uma conta?
+            <a href="{% url 'registro' %}" class="text-blue-600 hover:underline">Cadastre-se</a>
+        </p>
+
+        <div class="my-6 flex items-center">
+            <div class="flex-grow h-px bg-gray-300"></div>
+            <span class="px-3 text-gray-500 text-sm">ou</span>
+            <div class="flex-grow h-px bg-gray-300"></div>
+        </div>
+
+        <!-- Login com Google -->
+        <a href="{% url 'social:begin' 'google-oauth2' %}" class="w-full flex items-center justify-center bg-red-600 text-white py-2 rounded hover:bg-red-700 transition mb-3">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M21.35 11.1h-9.18v2.99h5.27c-.23 1.24-.94 2.28-2 2.98v2.48h3.24c1.9-1.76 2.99-4.35 2.99-7.47 0-.66-.07-1.3-.19-1.91z"/><path d="M12.17 22c2.7 0 4.97-.89 6.63-2.4l-3.24-2.48c-.9.61-2.06.98-3.39.98-2.6 0-4.8-1.76-5.59-4.12h-3.3v2.59c1.66 3.28 5.06 5.43 9.06 5.43z"/><path d="M6.58 13.98a5.675 5.675 0 0 1 0-3.96v-2.6h-3.3a9.999 9.999 0 0 0 0 9.16l3.3-2.6z"/><path d="M12.17 4.86c1.47 0 2.78.51 3.81 1.52l2.86-2.86C17.13 1.72 14.85 1 12.17 1 8.17 1 4.77 3.15 3.11 6.43l3.3 2.6c.79-2.36 2.99-4.12 5.59-4.12z"/></svg>
+            Entrar com Google
+        </a>
+
+        <!-- Login com GitHub -->
+        <a href="{% url 'social:begin' 'github' %}" class="w-full flex items-center justify-center bg-gray-800 text-white py-2 rounded hover:bg-black transition">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 .3C5.4.3 0 5.7 0 12.3c0 5.3 3.4 9.8 8.2 11.4.6.1.8-.2.8-.5v-2.1c-3.3.7-4-1.6-4-1.6-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.8-.6 1.2-1 .3-.2.6-.5 1-.5.5 0 1 .3 1.3.5.3.3.5.6.5 1.1v1.5c0 .3.2.5.6.5 4.8-1.5 8.2-6 8.2-11.3C24 5.7 18.6.3 12 .3z"/></svg>
+            Entrar com GitHub
+        </a>
+
+    </div>
+
 </body>
 </html>

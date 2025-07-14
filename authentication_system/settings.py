@@ -16,6 +16,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'usuarios',
+    'widget_tweaks',
     'rest_framework_simplejwt.token_blacklist',
     'social_django',
 ]

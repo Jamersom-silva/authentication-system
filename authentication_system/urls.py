@@ -8,6 +8,7 @@ urlpatterns = [
     path('registro/', usuarios_views.registro_view, name='registro'),
     path('login/', usuarios_views.login_view, name='login'),
     path('logout/', usuarios_views.logout_view, name='logout'),
+    path('api/logout/', usuarios_views.LogoutAPIView.as_view(), name='api_logout'),
     path('oauth/', include('social_django.urls', namespace='social')),
     path('api/register/', usuarios_views.RegisterView.as_view(), name='api_register'),
 ]

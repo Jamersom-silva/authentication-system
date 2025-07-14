@@ -4,8 +4,13 @@ from .forms import RegistroForm, LoginForm
 from .serializers import UserSerializer
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
 
-# API View para registro via API REST (JSON)
+
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
@@ -42,3 +47,15 @@ def logout_view(request):
 # View para home (evita erro de importação)
 def home_view(request):
     return render(request, 'usuarios/home.html')
+
+class LogoutAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"detail": "Logout realizado com sucesso."}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"detail": "Token inválido ou ausente."}, status=status.HTTP_400_BAD_REQUEST)

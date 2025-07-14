@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <title>Home</title>
+</head>
+<body>
+    <h1>Bem-vindo à página inicial!</h1>
+    <p>Você está logado como {{ request.user.email }}</p>
+    <a href="{% url 'logout' %}">Sair</a>
+</body>
+</html>

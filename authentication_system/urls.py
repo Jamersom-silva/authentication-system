@@ -4,9 +4,9 @@ from usuarios import views as usuarios_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', usuarios_views.home_view, name='home'),
+    path('', usuarios_views.login_view, name='login'),
+    path('home/', usuarios_views.home_view, name='home'),       
     path('registro/', usuarios_views.registro_view, name='registro'),
-    path('login/', usuarios_views.login_view, name='login'),
     path('logout/', usuarios_views.logout_view, name='logout'),
     path('api/logout/', usuarios_views.LogoutAPIView.as_view(), name='api_logout'),
     path('oauth/', include('social_django.urls', namespace='social')),

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+</head>
+<body>
+    <h1>Bem-vindo(a) à Home</h1>
+    {% if user.is_authenticated %}
+        <p>Olá, {{ user.email }}!</p>
+        <a href="{% url 'logout' %}">Sair</a>
+    {% else %}
+        <a href="{% url 'login' %}">Entrar</a>
+        <a href="{% url 'registro' %}">Registrar</a>
+    {% endif %}
+</body>
+</html>

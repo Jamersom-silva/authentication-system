@@ -1,14 +1,12 @@
 from django.contrib import admin
 from django.urls import path
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
-from usuarios.views import RegisterView
+from usuarios import views as usuarios_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('register/', RegisterView.as_view(), name='register'),
-    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('', usuarios_views.home_view, name='home'),
+    path('registro/', usuarios_views.registro_view, name='registro'),
+    path('login/', usuarios_views.login_view, name='login'),
+    path('logout/', usuarios_views.logout_view, name='logout'),
+    path('api/register/', usuarios_views.RegisterView.as_view(), name='api_register'),
 ]

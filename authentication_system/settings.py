@@ -79,6 +79,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = 'usuarios.User'
+AUTHENTICATION_BACKENDS = ['usuarios.backends.EmailBackend']
+
 
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.github.GithubOAuth2',

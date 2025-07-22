@@ -2,54 +2,13 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Criar Conta</title>
+    <meta charset="UTF-8" />
+    <title>Registrar Usuário</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-</head>
-<body class="auth-body">
-    <div class="auth-container">
-        <div class="auth-card">
-            <h2>Crie sua conta</h2>
 
-            <form method="post">
-                {% csrf_token %}
-
-                <div class="form-group">
-                    {{ form.username.label_tag }}
-                    {% render_field form.username class="form-control" placeholder="Nome de usuário" %}
-                </div>
-
-                <div class="form-group">
-                    {{ form.email.label_tag }}
-                    {% render_field form.email class="form-control" placeholder="Seu e-mail" %}
-                </div>
-
-                <div class="form-group">
-                    {{ form.password1.label_tag }}
-                    {% render_field form.password1 class="form-control" placeholder="Senha" %}
-                </div>
-
-                <div class="form-group">
-                    {{ form.password2.label_tag }}
-                    {% render_field form.password2 class="form-control" placeholder="Confirme a senha" %}
-                </div>
-
-                <button type="submit" class="btn-primary">Cadastrar</button>
-            </form>
-
-            <div class="social-login">
-                <p>Ou cadastre com:</p>
-                <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn-social google">Google</a>
-                <a href="{% url 'social:begin' 'github' %}" class="btn-social github">GitHub</a>
-            </div>
-
-            <p class="switch-link">Já tem conta? <a href="{% url 'login' %}">Faça login</a></p>
-        </div>
-    </div>
-</body>
- <style>
+    <style>
         body.auth-body {
             background: #f0f2f5;
             font-family: 'Helvetica', sans-serif;
@@ -118,6 +77,36 @@
             margin-top: 1rem;
         }
     </style>
-    
+</head>
+<body class="auth-body">
+    <div class="auth-container">
+        <div class="auth-card">
+            <h2>Crie sua conta</h2>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ form.nome.label_tag }}<br>
+                    {% render_field form.nome class="form-control" placeholder="Seu nome" %}
+                    {{ form.nome.errors }}
+                </div>
+                <div class="form-group">
+                    {{ form.email.label_tag }}<br>
+                    {% render_field form.email class="form-control" placeholder="Seu email" %}
+                    {{ form.email.errors }}
+                </div>
+                <div class="form-group">
+                    {{ form.password1.label_tag }}<br>
+                    {% render_field form.password1 class="form-control" placeholder="Senha" %}
+                    {{ form.password1.errors }}
+                </div>
+                <div class="form-group">
+                    {{ form.password2.label_tag }}<br>
+                    {% render_field form.password2 class="form-control" placeholder="Confirme a senha" %}
+                    {{ form.password2.errors }}
+                </div>
+                <button type="submit" class="btn-primary">Registrar</button>
+            </form>
+        </div>
+    </div>
+</body>
 </html>
-

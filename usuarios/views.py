@@ -22,9 +22,11 @@ import random
 
 User = get_user_model()
 
+
 @login_required
 def home_view(request):
     return render(request, 'usuarios/home.html')
+
 
 # Registro e Login tradicionais Django
 def registro_view(request):
@@ -34,9 +36,12 @@ def registro_view(request):
             user = form.save()
             login(request, user)
             return redirect('home')
+        else:
+            print(form.errors)  # Para debug
     else:
         form = RegistroForm()
     return render(request, 'usuarios/registro.html', {'form': form})
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -45,18 +50,23 @@ def login_view(request):
             user = form.get_user()
             login(request, user)
             return redirect('home')
+        else:
+            print(form.errors)  # Para debug
     else:
         form = LoginForm()
     return render(request, 'usuarios/login.html', {'form': form})
+
 
 def logout_view(request):
     logout(request)
     return redirect('login')
 
+
 # API Registration com DRF
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
+
 
 # Logout API com blacklist JWT
 class LogoutAPIView(APIView):
@@ -71,10 +81,12 @@ class LogoutAPIView(APIView):
         except Exception:
             return Response({"detail": "Token inválido ou ausente."}, status=status.HTTP_400_BAD_REQUEST)
 
+
 # Dashboard protegido por JWT
 @login_required_jwt
 def dashboard_view(request):
     return JsonResponse({'message': f'Olá, {request.user.username}! Você está logado.'})
+
 
 # Redefinição de senha via email
 class PasswordResetRequestAPIView(APIView):
@@ -101,6 +113,7 @@ class PasswordResetRequestAPIView(APIView):
         )
         return Response({'detail': 'Email de redefinição enviado.'})
 
+
 class PasswordResetConfirmAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -118,6 +131,7 @@ class PasswordResetConfirmAPIView(APIView):
         user.set_password(password)
         user.save()
         return Response({'detail': 'Senha redefinida com sucesso.'})
+
 
 # Ativação de conta por email
 class ActivateUserAPIView(APIView):
@@ -138,6 +152,7 @@ class ActivateUserAPIView(APIView):
         else:
             return Response({'detail': 'Link inválido ou expirado.'}, status=status.HTTP_400_BAD_REQUEST)
 
+
 # Limite simples de tentativas de login (brute-force) com cache IP
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -146,6 +161,7 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
 
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
@@ -159,7 +175,8 @@ class LoginAPIView(APIView):
         email = request.data.get('email')
         password = request.data.get('password')
 
-        user = authenticate(request, email=email, password=password)
+        # Aqui passo email como username para o backend customizado funcionar
+        user = authenticate(request, username=email, password=password)
         if user is None:
             cache.set(ip, attempts + 1, timeout=300)  # bloqueio por 5 minutos
             return Response({'detail': 'Credenciais inválidas.'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -171,6 +188,7 @@ class LoginAPIView(APIView):
             'access': str(refresh.access_token),
             'user': UserSerializer(user).data
         })
+
 
 # 2FA simples via email
 class TwoFactorSendCodeAPIView(APIView):
@@ -188,6 +206,7 @@ class TwoFactorSendCodeAPIView(APIView):
             fail_silently=False,
         )
         return Response({'detail': 'Código 2FA enviado por email.'})
+
 
 class TwoFactorVerifyCodeAPIView(APIView):
     permission_classes = [IsAuthenticated]

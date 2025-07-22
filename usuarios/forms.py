@@ -6,10 +6,11 @@ User = get_user_model()
 
 class RegistroForm(UserCreationForm):
     email = forms.EmailField(required=True)
+    nome = forms.CharField(required=True)
 
     class Meta:
         model = User
         fields = ("nome", "email", "password1", "password2")
 
 class LoginForm(AuthenticationForm):
-    username = forms.EmailField(label="Email")  # substitui 'username' por 'email'
+    username = forms.EmailField(label="Email")  # Troca username por email

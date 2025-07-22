@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from usuarios import views as usuarios_views
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -16,21 +17,20 @@ urlpatterns = [
     path('api/login/', usuarios_views.LoginAPIView.as_view(), name='api_login'),
     path('api/logout/', usuarios_views.LogoutAPIView.as_view(), name='api_logout'),
 
-    path('api/token/refresh/', 
-         # Se você estiver usando o TokenRefreshView oficial do SimpleJWT
-         # importe e use ele aqui:
-         # from rest_framework_simplejwt.views import TokenRefreshView
-         # path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # Renovação do token JWT usando refresh token
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-         usuarios_views.TokenRefreshAPIView.as_view(), name='token_refresh'),
-
+    # Redefinição de senha via email
     path('api/password-reset/', usuarios_views.PasswordResetRequestAPIView.as_view(), name='password_reset'),
     path('api/password-reset-confirm/<uidb64>/<token>/', usuarios_views.PasswordResetConfirmAPIView.as_view(), name='password_reset_confirm'),
+
+    # Ativação de conta via email
     path('api/ativar/<uidb64>/<token>/', usuarios_views.ActivateUserAPIView.as_view(), name='activate_user'),
 
+    # Autenticação de dois fatores (2FA)
     path('api/2fa/send/', usuarios_views.TwoFactorSendCodeAPIView.as_view(), name='2fa_send'),
     path('api/2fa/verify/', usuarios_views.TwoFactorVerifyCodeAPIView.as_view(), name='2fa_verify'),
 
-    # Social Auth
+    # Social Auth (OAuth)
     path('oauth/', include('social_django.urls', namespace='social')),
 ]

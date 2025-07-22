@@ -4,21 +4,35 @@ from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.core.cache import cache
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.http import JsonResponse
+
 from .serializers import UserSerializer
 from .forms import RegistroForm, LoginForm
 from .auth_utils import login_required_jwt  # seu decorador JWT
 import random
-from django.shortcuts import render, redirect
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def home_view(request):
+    return render(request, 'usuarios/home.html')
+
+
 
 User = get_user_model()
 
-# ----- Registro e Login com formulário Django (tradicional) -----
+# -------------------------
+# Registro e Login tradicionais Django
+# -------------------------
 
 def registro_view(request):
     if request.method == 'POST':
@@ -46,17 +60,17 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-@login_required_jwt
-def dashboard_view(request):
-    return JsonResponse({'message': f'Olá, {request.user.username}! Você está logado.'})
-
-# ----- API Registration (DRF) -----
+# -------------------------
+# API Registration com DRF
+# -------------------------
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
-# ----- Logout API com blacklist JWT -----
+# -------------------------
+# Logout API com blacklist JWT
+# -------------------------
 
 class LogoutAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -70,7 +84,17 @@ class LogoutAPIView(APIView):
         except Exception:
             return Response({"detail": "Token inválido ou ausente."}, status=status.HTTP_400_BAD_REQUEST)
 
-# ----- Redefinição de senha via email -----
+# -------------------------
+# Dashboard protegido por JWT
+# -------------------------
+
+@login_required_jwt
+def dashboard_view(request):
+    return JsonResponse({'message': f'Olá, {request.user.username}! Você está logado.'})
+
+# -------------------------
+# Redefinição de senha via email
+# -------------------------
 
 class PasswordResetRequestAPIView(APIView):
     permission_classes = [AllowAny]
@@ -114,7 +138,9 @@ class PasswordResetConfirmAPIView(APIView):
         user.save()
         return Response({'detail': 'Senha redefinida com sucesso.'})
 
-# ----- Ativação de conta por email -----
+# -------------------------
+# Ativação de conta por email
+# -------------------------
 
 class ActivateUserAPIView(APIView):
     permission_classes = [AllowAny]
@@ -134,7 +160,9 @@ class ActivateUserAPIView(APIView):
         else:
             return Response({'detail': 'Link inválido ou expirado.'}, status=status.HTTP_400_BAD_REQUEST)
 
-# ----- Limite de tentativas de login (exemplo simples) -----
+# -------------------------
+# Limite simples de tentativas de login (brute-force) com cache IP
+# -------------------------
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -153,8 +181,6 @@ class LoginAPIView(APIView):
         if attempts >= 5:
             return Response({'detail': 'Muitas tentativas. Tente novamente mais tarde.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
-        # Aqui você coloca sua lógica de autenticação JWT
-        # Exemplo fictício:
         email = request.data.get('email')
         password = request.data.get('password')
 
@@ -163,18 +189,19 @@ class LoginAPIView(APIView):
             if not user.check_password(password):
                 raise Exception()
         except Exception:
-            cache.set(ip, attempts + 1, timeout=300)  # bloqueio 5 min
+            cache.set(ip, attempts + 1, timeout=300)  # bloqueio por 5 minutos
             return Response({'detail': 'Credenciais inválidas.'}, status=status.HTTP_401_UNAUTHORIZED)
 
         cache.delete(ip)
-        # Aqui gere seu JWT e retorne para o usuário
         refresh = RefreshToken.for_user(user)
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         })
 
-# ----- 2FA simples via email -----
+# -------------------------
+# 2FA simples via email
+# -------------------------
 
 class TwoFactorSendCodeAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -182,7 +209,7 @@ class TwoFactorSendCodeAPIView(APIView):
     def post(self, request):
         user = request.user
         code = random.randint(100000, 999999)
-        cache.set(f'2fa_{user.pk}', code, timeout=300)  # válido 5 minutos
+        cache.set(f'2fa_{user.pk}', code, timeout=300)  # válido por 5 minutos
         send_mail(
             'Seu código 2FA',
             f'Seu código de verificação é: {code}',

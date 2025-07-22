@@ -1,4 +1,4 @@
-from django.contrib.auth import login, logout, get_user_model
+from django.contrib.auth import login, logout, get_user_model, authenticate
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
@@ -19,21 +19,14 @@ from .forms import RegistroForm, LoginForm
 from .auth_utils import login_required_jwt  # seu decorador JWT
 import random
 
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
+
+User = get_user_model()
 
 @login_required
 def home_view(request):
     return render(request, 'usuarios/home.html')
 
-
-
-User = get_user_model()
-
-# -------------------------
 # Registro e Login tradicionais Django
-# -------------------------
-
 def registro_view(request):
     if request.method == 'POST':
         form = RegistroForm(request.POST)
@@ -60,42 +53,30 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-# -------------------------
 # API Registration com DRF
-# -------------------------
-
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
-# -------------------------
 # Logout API com blacklist JWT
-# -------------------------
-
 class LogoutAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         try:
-            refresh_token = request.data["refresh"]
+            refresh_token = request.data.get("refresh")
             token = RefreshToken(refresh_token)
             token.blacklist()
             return Response({"detail": "Logout realizado com sucesso."}, status=status.HTTP_205_RESET_CONTENT)
         except Exception:
             return Response({"detail": "Token inválido ou ausente."}, status=status.HTTP_400_BAD_REQUEST)
 
-# -------------------------
 # Dashboard protegido por JWT
-# -------------------------
-
 @login_required_jwt
 def dashboard_view(request):
     return JsonResponse({'message': f'Olá, {request.user.username}! Você está logado.'})
 
-# -------------------------
 # Redefinição de senha via email
-# -------------------------
-
 class PasswordResetRequestAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -106,7 +87,7 @@ class PasswordResetRequestAPIView(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # Resposta genérica para segurança
+            # Resposta genérica para não revelar existência do usuário
             return Response({'detail': 'Se o email existir, enviaremos instruções.'})
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
@@ -138,10 +119,7 @@ class PasswordResetConfirmAPIView(APIView):
         user.save()
         return Response({'detail': 'Senha redefinida com sucesso.'})
 
-# -------------------------
 # Ativação de conta por email
-# -------------------------
-
 class ActivateUserAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -160,10 +138,7 @@ class ActivateUserAPIView(APIView):
         else:
             return Response({'detail': 'Link inválido ou expirado.'}, status=status.HTTP_400_BAD_REQUEST)
 
-# -------------------------
 # Limite simples de tentativas de login (brute-force) com cache IP
-# -------------------------
-
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
@@ -184,11 +159,8 @@ class LoginAPIView(APIView):
         email = request.data.get('email')
         password = request.data.get('password')
 
-        try:
-            user = User.objects.get(email=email)
-            if not user.check_password(password):
-                raise Exception()
-        except Exception:
+        user = authenticate(request, email=email, password=password)
+        if user is None:
             cache.set(ip, attempts + 1, timeout=300)  # bloqueio por 5 minutos
             return Response({'detail': 'Credenciais inválidas.'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -197,12 +169,10 @@ class LoginAPIView(APIView):
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
+            'user': UserSerializer(user).data
         })
 
-# -------------------------
 # 2FA simples via email
-# -------------------------
-
 class TwoFactorSendCodeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 

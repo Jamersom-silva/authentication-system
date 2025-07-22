@@ -8,6 +8,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.http import JsonResponse
+from .auth_utils import login_required_jwt
+
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
@@ -54,3 +57,6 @@ class LogoutAPIView(APIView):
             return Response({"detail": "Logout realizado com sucesso."}, status=status.HTTP_205_RESET_CONTENT)
         except Exception:
             return Response({"detail": "Token inválido ou ausente."}, status=status.HTTP_400_BAD_REQUEST)
+@login_required_jwt
+def dashboard_view(request):
+    return JsonResponse({'message': f'Olá, {request.user.username}! Você está logado.'})

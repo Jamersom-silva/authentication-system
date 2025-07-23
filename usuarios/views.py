@@ -6,6 +6,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.core.cache import cache
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 
 from rest_framework import generics, status
@@ -16,9 +17,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import UserSerializer
 from .forms import RegistroForm, LoginForm
-from .auth_utils import login_required_jwt  # seu decorador JWT
-import random
+from .auth_utils import login_required_jwt
 
+import random
+import secrets
 
 User = get_user_model()
 
@@ -28,32 +30,31 @@ def home_view(request):
     return render(request, 'usuarios/home.html')
 
 
-# Registro e Login tradicionais Django
 def registro_view(request):
     if request.method == 'POST':
         form = RegistroForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('home')
-        else:
-            print(form.errors)  # Para debug
+            user = form.save(commit=False)
+            user.is_active = False  # Usuário precisa ativar via email
+            user.save()
+            # Aqui você pode enviar email de ativação
+            return redirect('login')  # Redireciona para a tela de login
     else:
         form = RegistroForm()
     return render(request, 'usuarios/registro.html', {'form': form})
 
 
 def login_view(request):
-    if request.method == 'POST':
-        form = LoginForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
+    form = LoginForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        email = form.cleaned_data['email']
+        password = form.cleaned_data['password']
+        user = authenticate(request, email=email, password=password)
+        if user is not None:
             login(request, user)
-            return redirect('home')
+            return redirect(settings.LOGIN_REDIRECT_URL)
         else:
-            print(form.errors)  # Para debug
-    else:
-        form = LoginForm()
+            form.add_error(None, "Email ou senha inválidos.")
     return render(request, 'usuarios/login.html', {'form': form})
 
 
@@ -62,13 +63,13 @@ def logout_view(request):
     return redirect('login')
 
 
-# API Registration com DRF
+# API - Registro
 class RegisterView(generics.CreateAPIView):
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
 
-# Logout API com blacklist JWT
+# API - Logout (blacklist JWT)
 class LogoutAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -82,13 +83,13 @@ class LogoutAPIView(APIView):
             return Response({"detail": "Token inválido ou ausente."}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Dashboard protegido por JWT
+# API - Dashboard protegido por JWT
 @login_required_jwt
 def dashboard_view(request):
-    return JsonResponse({'message': f'Olá, {request.user.username}! Você está logado.'})
+    return JsonResponse({'message': f'Olá, {request.user.email}! Você está logado.'})
 
 
-# Redefinição de senha via email
+# API - Solicitação de redefinição de senha
 class PasswordResetRequestAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -99,11 +100,10 @@ class PasswordResetRequestAPIView(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # Resposta genérica para não revelar existência do usuário
             return Response({'detail': 'Se o email existir, enviaremos instruções.'})
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        link = f"http://localhost:8000/api/password-reset-confirm/{uid}/{token}/"
+        link = request.build_absolute_uri(f'/api/password-reset-confirm/{uid}/{token}/')
         send_mail(
             'Redefinição de senha',
             f'Clique no link para redefinir sua senha: {link}',
@@ -114,6 +114,7 @@ class PasswordResetRequestAPIView(APIView):
         return Response({'detail': 'Email de redefinição enviado.'})
 
 
+# API - Confirmação da redefinição de senha
 class PasswordResetConfirmAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -133,7 +134,7 @@ class PasswordResetConfirmAPIView(APIView):
         return Response({'detail': 'Senha redefinida com sucesso.'})
 
 
-# Ativação de conta por email
+# API - Ativação de conta
 class ActivateUserAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -149,11 +150,10 @@ class ActivateUserAPIView(APIView):
             user.is_active = True
             user.save()
             return Response({'detail': 'Conta ativada com sucesso.'})
-        else:
-            return Response({'detail': 'Link inválido ou expirado.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'Link inválido ou expirado.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# Limite simples de tentativas de login (brute-force) com cache IP
+# Função utilitária para capturar IP do cliente
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
@@ -163,6 +163,7 @@ def get_client_ip(request):
     return ip
 
 
+# API - Login com JWT e limitação de tentativas
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -175,10 +176,9 @@ class LoginAPIView(APIView):
         email = request.data.get('email')
         password = request.data.get('password')
 
-        # Aqui passo email como username para o backend customizado funcionar
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request, email=email, password=password)
         if user is None:
-            cache.set(ip, attempts + 1, timeout=300)  # bloqueio por 5 minutos
+            cache.set(ip, attempts + 1, timeout=300)
             return Response({'detail': 'Credenciais inválidas.'}, status=status.HTTP_401_UNAUTHORIZED)
 
         cache.delete(ip)
@@ -190,14 +190,14 @@ class LoginAPIView(APIView):
         })
 
 
-# 2FA simples via email
+# API - Enviar código 2FA
 class TwoFactorSendCodeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         user = request.user
         code = random.randint(100000, 999999)
-        cache.set(f'2fa_{user.pk}', code, timeout=300)  # válido por 5 minutos
+        cache.set(f'2fa_{user.pk}', code, timeout=300)
         send_mail(
             'Seu código 2FA',
             f'Seu código de verificação é: {code}',
@@ -208,6 +208,7 @@ class TwoFactorSendCodeAPIView(APIView):
         return Response({'detail': 'Código 2FA enviado por email.'})
 
 
+# API - Verificar código 2FA
 class TwoFactorVerifyCodeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -215,7 +216,7 @@ class TwoFactorVerifyCodeAPIView(APIView):
         user = request.user
         code = request.data.get('code')
         cached_code = cache.get(f'2fa_{user.pk}')
-        if cached_code and str(cached_code) == str(code):
+        if cached_code and secrets.compare_digest(str(cached_code), str(code)):
             cache.delete(f'2fa_{user.pk}')
             return Response({'detail': '2FA verificado com sucesso.'})
         return Response({'detail': 'Código inválido.'}, status=status.HTTP_400_BAD_REQUEST)

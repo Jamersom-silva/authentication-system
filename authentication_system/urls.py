@@ -7,43 +7,39 @@ urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
 
-    # Views tradicionais (usando formulários Django)
+    # Django views (páginas com formulário tradicional)
     path('', usuarios_views.login_view, name='login'),
     path('home/', usuarios_views.home_view, name='home'),
     path('registro/', usuarios_views.registro_view, name='registro'),
     path('logout/', usuarios_views.logout_view, name='logout'),
 
-    # API REST - Autenticação e Usuário
+    # API REST - Cadastro e autenticação
     path('api/register/', usuarios_views.RegisterView.as_view(), name='api_register'),
     path('api/login/', usuarios_views.LoginAPIView.as_view(), name='api_login'),
     path('api/logout/', usuarios_views.LogoutAPIView.as_view(), name='api_logout'),
 
-    # Renovação de token JWT (refresh token)
+    # JWT - Refresh Token
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    # Redefinição de senha via email
-    path(
-        'api/password-reset/',
-        usuarios_views.PasswordResetRequestAPIView.as_view(),
-        name='password_reset'
-    ),
+    # Redefinição de senha (reset via email)
+    path('api/password-reset/', usuarios_views.PasswordResetRequestAPIView.as_view(), name='password_reset'),
     path(
         'api/password-reset-confirm/<uidb64>/<token>/',
         usuarios_views.PasswordResetConfirmAPIView.as_view(),
         name='password_reset_confirm'
     ),
 
-    # Ativação de conta via email
+    # Ativação de conta
     path(
         'api/ativar/<uidb64>/<token>/',
         usuarios_views.ActivateUserAPIView.as_view(),
         name='activate_user'
     ),
 
-    # Autenticação de Dois Fatores (2FA)
+    # Verificação em duas etapas (2FA)
     path('api/2fa/send/', usuarios_views.TwoFactorSendCodeAPIView.as_view(), name='2fa_send'),
     path('api/2fa/verify/', usuarios_views.TwoFactorVerifyCodeAPIView.as_view(), name='2fa_verify'),
 
-    # Social Auth (OAuth) - apenas se usar social_django
+    # Social Auth (OAuth com Google, GitHub, etc.)
     path('oauth/', include('social_django.urls', namespace='social')),
 ]

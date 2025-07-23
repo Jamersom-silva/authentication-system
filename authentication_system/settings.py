@@ -36,7 +36,7 @@ ROOT_URLCONF = 'authentication_system.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'],  # <-- aqui está a pasta templates
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -67,8 +67,11 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = 'usuarios.User'
 
 AUTHENTICATION_BACKENDS = (
+    'usuarios.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
+
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

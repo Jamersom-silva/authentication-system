@@ -1,34 +1,30 @@
-# Authentication System
+# Authentication System - Básico
 
-Projeto básico de sistema de autenticação em Django, com funcionalidades para registro, login, logout, ativação por email, redefinição de senha, autenticação via JWT e 2FA.
+Projeto simples de sistema de autenticação em Django, com funcionalidades básicas de:
+
+- Cadastro de usuário
+- Login e logout tradicionais
 
 ---
 
 ## Funcionalidades
 
-- Registro de usuário com ativação via email
-- Login e logout tradicionais (formulários Django)
-- Autenticação via API REST com JWT
-- Redefinição de senha por email
-- Autenticação de dois fatores (2FA) via código enviado por email
-- Suporte para OAuth social (Google, GitHub, etc)
-- Proteção contra múltiplas tentativas de login com cache
-- Dashboard protegido para usuários autenticados
+- Registro de usuário via formulário Django
+- Login e logout com autenticação padrão do Django
+- Conta ativada automaticamente após registro (sem confirmação por email)
+- Redirecionamento após login para página inicial protegida
 
 ---
 
 ## Tecnologias
 
-- Python 3.11
-- Django 5.2
-- Django REST Framework
-- Simple JWT
+- Python 3.11  
+- Django 5.2  
 - SQLite (banco de dados padrão)
-- Email backend para envio de emails (configurar SMTP)
 
 ---
 
-## Como usar
+## Instalação e uso
 
 1. Clone o repositório:
 

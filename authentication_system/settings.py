@@ -5,7 +5,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'sua-chave-secreta-aqui'
 DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'authentication-system-882l.onrender.com']
+ALLOWED_HOSTS = ['*']
+
 
 
 INSTALLED_APPS = [

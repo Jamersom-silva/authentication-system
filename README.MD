@@ -31,3 +31,4 @@ Projeto simples de sistema de autenticação em Django, com funcionalidades bás
 ```bash
 git clone https://github.com/Jamersom-silva/authentication-system.git
 cd authentication-system
+deploy: https://authentication-system-1-oyun.onrender.com
